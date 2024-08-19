@@ -1,13 +1,16 @@
 from fastapi import APIRouter, HTTPException, Path, Body, Depends
 from sqlalchemy import Column
 from sqlalchemy.orm import Session
-from config import logger, chat_history
+from config import logger, chat_history, google_api_key
 from models import PDFFile
-from models.chat_models import MessageRequest, PDFChatPath
-from utils.extract_text_from_pdf import extract_text_from_pdf
-from utils.split_text import split_text
-from utils.generate_response_with_gemini import generate_response_with_gemini
-from utils.get_or_create_collection import get_or_create_collection
+from models.chat_models import MessageRequest, ChatResponse
+
+from utils import (
+    extract_text_from_pdf,
+    split_text,
+    generate_response_with_gemini,
+    get_or_create_collection,
+)
 import os
 import chromadb
 import chromadb.utils.embedding_functions as embedding_functions
@@ -17,17 +20,23 @@ from db.get_db import get_db
 chat_router = APIRouter()
 
 
-@chat_router.post("/{pdf_id}/")
+@chat_router.post("/{pdf_id}/", response_model=ChatResponse)
 async def chat_with_pdf(
-    pdf_id: PDFChatPath = Path(...),
+    pdf_id: str = Path(...),
     message: MessageRequest = Body(...),
     db: Session = Depends(get_db),  # Dependency injection
 ):
+    if not pdf_id:
+        raise HTTPException(
+            status_code=400,
+            detail="PDF ID cannot be empty.",
+        )
 
     logger.info("Chatting with PDF: %s", pdf_id)
     logger.info("Message: %s", message.message)
 
     pdf_file = db.query(PDFFile).filter(PDFFile.id == pdf_id).first()
+
     if not pdf_file:
         raise HTTPException(
             status_code=404,
@@ -49,7 +58,6 @@ async def chat_with_pdf(
         )
 
     extracted_text = extract_text_from_pdf(pdf_content)
-
     logger.info("Extracted text: %s", extracted_text)
 
     persist_directory = os.path.join(os.getcwd(), "persist")
@@ -59,8 +67,6 @@ async def chat_with_pdf(
         collection_name = collection_name.value
 
     client = chromadb.PersistentClient(path=persist_directory)
-
-    google_api_key = os.getenv("GEMINI_API_KEY")
 
     # create embedding function
     embedding_function = (
@@ -78,14 +84,14 @@ async def chat_with_pdf(
         query_texts=[user_message],
         n_results=5,
     )
-
     if results["documents"]:
         concatenated_documents = " ".join(results["documents"][0])
     else:
         concatenated_documents = ""
 
-    conversation_history = chat_history.messages
+    logger.info("Concatenated documents: %s", concatenated_documents)
 
+    conversation_history = chat_history.messages
     response = generate_response_with_gemini(
         user_message, concatenated_documents, conversation_history
     )

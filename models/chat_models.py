@@ -1,9 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class MessageRequest(BaseModel):
     message: str
 
 
-class PDFChatPath(BaseModel):
-    pdf_id: str = Field(..., min_length=1, description="The ID of the PDF")
+class ChatResponse(BaseModel):
+    response: str

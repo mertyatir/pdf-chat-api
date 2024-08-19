@@ -31,6 +31,9 @@ def get_or_create_collection(
         populate_collection(
             client, collection_name, embedding_function, chunked_text
         )
+        collection = client.get_collection(
+            name=collection_name, embedding_function=embedding_function
+        )
 
     if not collection:
         raise HTTPException(

@@ -6,13 +6,21 @@ import uuid
 import pypdf
 from pypdf.errors import PdfStreamError
 from models import PDFFile
+from models.pdf_models import UploadPDFResponse
 from db.get_db import get_db
+
 
 pdf_router = APIRouter()
 
 
-@pdf_router.post("/")
-async def upload_pdf(file: UploadFile, db: Session = Depends(get_db)):
+@pdf_router.post(
+    "/",
+    response_model=UploadPDFResponse,
+)
+async def upload_pdf(
+    file: UploadFile,
+    db: Session = Depends(get_db),
+):
 
     await validate_pdf(file)
 
