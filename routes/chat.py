@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Path, Body, Depends
 from sqlalchemy import Column
 from sqlalchemy.orm import Session
-from config import logger, chat_history, google_api_key
+from config import logger, chat_history
 from models.chat_models import MessageRequest, ChatResponse
 from utils import (
     generate_response_with_gemini,
@@ -9,10 +9,8 @@ from utils import (
 from services.chromaDB import (
     get_or_create_collection,
 )
-
 import os
 import chromadb
-import chromadb.utils.embedding_functions as embedding_functions
 from db.get_db import get_db
 from services.pdf_service import get_pdf_file
 from validators.chat_with_pdf import (
@@ -54,29 +52,24 @@ async def chat_with_pdf(
     if isinstance(collection_name, Column):
         collection_name = collection_name.value
 
-    # create embedding function
-    embedding_function = (
-        embedding_functions.GoogleGenerativeAiEmbeddingFunction  # type: ignore
-    )(api_key=google_api_key, task_type="RETRIEVAL_QUERY")
+    collection = get_or_create_collection(client, collection_name)
 
-    collection = get_or_create_collection(
-        client, collection_name, embedding_function
-    )
-
-    # Query the collection to get the 5 most relevant results
+    # Query the collection
     results = collection.query(
         query_texts=[user_message],
+        n_results=5,
     )
 
-    logger.info("Results: %s", results)
+    logger.info("Results: %s", results.get("documents"))
+
     if results["documents"]:
         concatenated_documents = " ".join(results["documents"][0])
     else:
         concatenated_documents = ""
 
-    logger.info("Concatenated documents: %s", concatenated_documents)
-
     conversation_history = chat_history.messages
+
+    logger.info("conversation_history: %s", conversation_history)
     response = generate_response_with_gemini(
         user_message, concatenated_documents, conversation_history
     )
