@@ -1,16 +1,27 @@
-def split_text(text, max_chunk_size=1000):
-    words = text.split()
-    chunks = []
-    current_chunk = []
+from typing import List
 
-    for word in words:
-        if len(" ".join(current_chunk + [word])) <= max_chunk_size:
-            current_chunk.append(word)
-        else:
-            chunks.append(" ".join(current_chunk))
-            current_chunk = [word]
 
-    if current_chunk:
-        chunks.append(" ".join(current_chunk))
+from semantic_text_splitter import TextSplitter
+
+"""
+Using the `semantic_text_splitter` library instead of
+`langchain.semantic_text_splitter`
+because the latter does not support setting a maximum chunk size.
+This limitation causes
+exceeding the context size of the model.
+"""
+
+
+def split_text(text: str) -> List[str]:
+    """
+    Split the text based on semantic similarity.
+
+    :param text: The original text to split.
+    :return: A list of text chunks.
+    """
+
+    max_characters = 1000
+    splitter = TextSplitter(max_characters)
+    chunks = splitter.chunks(text)
 
     return chunks
