@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, HTTPException, Depends
 from sqlalchemy.orm import Session
-from config import logger
+from sqlalchemy import Column
+from config import logger, google_api_key
 from utils.pdf_utils import validate_pdf
 import uuid
 import pypdf
@@ -8,7 +9,21 @@ from pypdf.errors import PdfStreamError
 from models import PDFFile
 from models.pdf_models import UploadPDFResponse
 from db.get_db import get_db
+import chromadb
+import chromadb.utils.embedding_functions as embedding_functions
+import os
 
+
+from utils import (
+    extract_text_from_pdf,
+    split_text,
+)
+from services.chromaDB import (
+    get_or_create_collection,
+    populate_collection,
+)
+
+from services.pdf_service import get_pdf_file
 
 pdf_router = APIRouter()
 
@@ -43,6 +58,40 @@ async def upload_pdf(
         )
         db.add(pdf_file)
         db.commit()
+
+        collection_name = pdf_file.filename
+
+        if isinstance(collection_name, Column):
+            collection_name = collection_name.value
+
+        # create embedding function
+        embedding_function = (
+            embedding_functions.GoogleGenerativeAiEmbeddingFunction  # type: ignore
+        )(api_key=google_api_key, task_type="RETRIEVAL_QUERY")
+
+        pdf_file = get_pdf_file(pdf_id, db)
+        collection_name = pdf_file.filename
+        if isinstance(collection_name, Column):
+            collection_name = collection_name.value
+
+        pdf_content = pdf_file.content
+        if not isinstance(pdf_content, bytes):
+            raise HTTPException(
+                status_code=500,
+                detail="PDF content is not in binary format.",
+            )
+
+        extracted_text = extract_text_from_pdf(pdf_content)
+        chunked_text = split_text(extracted_text)
+
+        persist_directory = os.path.join(os.getcwd(), "persist")
+
+        client = chromadb.PersistentClient(path=persist_directory)
+        collection = get_or_create_collection(
+            client, collection_name, embedding_function
+        )
+
+        populate_collection(collection, chunked_text)
 
         logger.info("PDF file uploaded successfully: %s", file.filename)
         return {

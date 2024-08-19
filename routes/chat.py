@@ -4,13 +4,10 @@ from sqlalchemy.orm import Session
 from config import logger, chat_history, google_api_key
 from models.chat_models import MessageRequest, ChatResponse
 from utils import (
-    extract_text_from_pdf,
-    split_text,
     generate_response_with_gemini,
 )
 from services.chromaDB import (
     get_or_create_collection,
-    populate_collection,
 )
 
 import os
@@ -49,29 +46,22 @@ async def chat_with_pdf(
 
     user_message = validate_message(message)
 
-    extracted_text = extract_text_from_pdf(pdf_content)
-
     persist_directory = os.path.join(os.getcwd(), "persist")
+    client = chromadb.PersistentClient(path=persist_directory)
+
     collection_name = pdf_file.filename
 
     if isinstance(collection_name, Column):
         collection_name = collection_name.value
-
-    client = chromadb.PersistentClient(path=persist_directory)
 
     # create embedding function
     embedding_function = (
         embedding_functions.GoogleGenerativeAiEmbeddingFunction  # type: ignore
     )(api_key=google_api_key, task_type="RETRIEVAL_QUERY")
 
-    # Check if the collection exists and populate if necessary
-    chunked_text = split_text(extracted_text)
-
     collection = get_or_create_collection(
         client, collection_name, embedding_function
     )
-
-    populate_collection(collection, chunked_text)
 
     # Query the collection to get the 5 most relevant results
     results = collection.query(
