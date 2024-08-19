@@ -8,14 +8,11 @@ def get_or_create_collection(
     client: ClientAPI,
     collection_name: str,
     embedding_function,
-    chunked_text: List[str],
 ) -> chromadb.Collection:
 
     collection = client.get_or_create_collection(
         name=collection_name, embedding_function=embedding_function
     )
-
-    populate_collection(collection=collection, chunked_text=chunked_text)
 
     return collection
 

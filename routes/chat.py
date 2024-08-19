@@ -7,8 +7,12 @@ from utils import (
     extract_text_from_pdf,
     split_text,
     generate_response_with_gemini,
-    get_or_create_collection,
 )
+from services.chromaDB import (
+    get_or_create_collection,
+    populate_collection,
+)
+
 import os
 import chromadb
 import chromadb.utils.embedding_functions as embedding_functions
@@ -64,8 +68,10 @@ async def chat_with_pdf(
     chunked_text = split_text(extracted_text)
 
     collection = get_or_create_collection(
-        client, collection_name, embedding_function, chunked_text
+        client, collection_name, embedding_function
     )
+
+    populate_collection(collection, chunked_text)
 
     # Query the collection to get the 5 most relevant results
     results = collection.query(
