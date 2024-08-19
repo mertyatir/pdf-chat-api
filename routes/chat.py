@@ -2,9 +2,7 @@ from fastapi import APIRouter, HTTPException, Path, Body, Depends
 from sqlalchemy import Column
 from sqlalchemy.orm import Session
 from config import logger, chat_history, google_api_key
-from models import PDFFile
 from models.chat_models import MessageRequest, ChatResponse
-
 from utils import (
     extract_text_from_pdf,
     split_text,
@@ -15,6 +13,11 @@ import os
 import chromadb
 import chromadb.utils.embedding_functions as embedding_functions
 from db.get_db import get_db
+from services.pdf_service import get_pdf_file
+from validators.chat_with_pdf import (
+    validate_pdf_id,
+    validate_message,
+)
 
 
 chat_router = APIRouter()
@@ -26,22 +29,12 @@ async def chat_with_pdf(
     message: MessageRequest = Body(...),
     db: Session = Depends(get_db),  # Dependency injection
 ):
-    if not pdf_id:
-        raise HTTPException(
-            status_code=400,
-            detail="PDF ID cannot be empty.",
-        )
+    validate_pdf_id(pdf_id)
 
     logger.info("Chatting with PDF: %s", pdf_id)
     logger.info("Message: %s", message.message)
 
-    pdf_file = db.query(PDFFile).filter(PDFFile.id == pdf_id).first()
-
-    if not pdf_file:
-        raise HTTPException(
-            status_code=404,
-            detail="PDF not found.",
-        )
+    pdf_file = get_pdf_file(pdf_id, db)
 
     pdf_content = pdf_file.content
     if not isinstance(pdf_content, bytes):
@@ -50,15 +43,9 @@ async def chat_with_pdf(
             detail="PDF content is not in binary format.",
         )
 
-    user_message = message.message
-    if not user_message:
-        raise HTTPException(
-            status_code=400,
-            detail="Message cannot be empty.",
-        )
+    user_message = validate_message(message)
 
     extracted_text = extract_text_from_pdf(pdf_content)
-    logger.info("Extracted text: %s", extracted_text)
 
     persist_directory = os.path.join(os.getcwd(), "persist")
     collection_name = pdf_file.filename
@@ -75,6 +62,7 @@ async def chat_with_pdf(
 
     # Check if the collection exists and populate if necessary
     chunked_text = split_text(extracted_text)
+
     collection = get_or_create_collection(
         client, collection_name, embedding_function, chunked_text
     )
@@ -82,8 +70,9 @@ async def chat_with_pdf(
     # Query the collection to get the 5 most relevant results
     results = collection.query(
         query_texts=[user_message],
-        n_results=5,
     )
+
+    logger.info("Results: %s", results)
     if results["documents"]:
         concatenated_documents = " ".join(results["documents"][0])
     else:
