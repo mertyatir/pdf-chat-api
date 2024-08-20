@@ -10,12 +10,8 @@ from models import PDFFile
 from models.pdf_models import UploadPDFResponse
 from db.get_db import get_db
 import chromadb
-
 import os
-from utils import (
-    extract_text_from_pdf,
-    split_text,
-)
+from utils import extract_text_from_pdf, split_text, preprocess_text
 from services.chromaDB import (
     get_or_create_collection,
     populate_collection,
@@ -75,7 +71,10 @@ async def upload_pdf(
             )
 
         extracted_text = extract_text_from_pdf(pdf_content)
-        chunked_text = split_text(extracted_text)
+
+        cleaned_text = preprocess_text(extracted_text)
+
+        chunked_text = split_text(cleaned_text)
 
         persist_directory = os.path.join(os.getcwd(), "persist")
 

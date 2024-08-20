@@ -58,12 +58,14 @@ async def chat_with_pdf(
     results = collection.query(
         query_texts=[user_message],
         n_results=5,
+        # Increase the number to get more accurate
+        # results for the summarization
     )
 
     logger.info("Results: %s", results.get("documents"))
 
     if results["documents"]:
-        concatenated_documents = " ".join(results["documents"][0])
+        concatenated_documents = "".join(results["documents"][0])
     else:
         concatenated_documents = ""
 
