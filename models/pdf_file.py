@@ -9,3 +9,4 @@ class PDFFile(Base):
     filename = Column(String, index=True)
     content = Column(LargeBinary)
     page_count = Column(Integer)
+    file_hash = Column(String, unique=True)
