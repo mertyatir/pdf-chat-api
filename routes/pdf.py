@@ -66,15 +66,12 @@ async def upload_pdf(
     db.add(pdf_file)
     db.commit()
 
-    collection_name = pdf_file.filename
+    collection_name = pdf_file.id
 
     if isinstance(collection_name, Column):
         collection_name = collection_name.value
 
     pdf_file = get_pdf_file(pdf_id, db)
-    collection_name = pdf_file.filename
-    if isinstance(collection_name, Column):
-        collection_name = collection_name.value
 
     pdf_content = pdf_file.content
     if not isinstance(pdf_content, bytes):

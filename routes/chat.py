@@ -45,7 +45,7 @@ async def chat_with_pdf(
     persist_directory = os.path.join(os.getcwd(), "persist")
     client = chromadb.PersistentClient(path=persist_directory)
 
-    collection_name = pdf_file.filename
+    collection_name = pdf_file.id
 
     if isinstance(collection_name, Column):
         collection_name = collection_name.value
