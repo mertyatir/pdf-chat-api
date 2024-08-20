@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Path, Body, Depends
 from sqlalchemy import Column
 from sqlalchemy.orm import Session
-from config import logger, chat_history
+from config import logger, get_or_create_chat_history
 from models.chat_models import MessageRequest, ChatResponse
 from utils import (
     generate_response_with_gemini,
@@ -67,10 +67,14 @@ async def chat_with_pdf(
     else:
         concatenated_documents = ""
 
+    chat_history = get_or_create_chat_history(pdf_file.session_id)
     conversation_history = chat_history.messages
 
     logger.info("conversation_history: %s", conversation_history)
     response = generate_response_with_gemini(
-        user_message, concatenated_documents, conversation_history
+        user_message,
+        concatenated_documents,
+        conversation_history,
+        chat_history,
     )
     return {"response": response}

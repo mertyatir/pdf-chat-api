@@ -52,6 +52,8 @@ async def upload_pdf(
     pdf_reader = pypdf.PdfReader(file.file)
     page_count = len(pdf_reader.pages)
 
+    session_id = str(uuid.uuid4())
+
     # Store the PDF file in the database
     pdf_file = PDFFile(
         id=pdf_id,
@@ -59,6 +61,7 @@ async def upload_pdf(
         content=file_content,
         page_count=page_count,
         file_hash=file_hash,
+        session_id=session_id,
     )
     db.add(pdf_file)
     db.commit()

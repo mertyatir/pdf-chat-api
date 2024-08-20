@@ -1,16 +1,19 @@
-from config import model, logger, chat_history
+from config import model, logger
 from typing import List
 from langchain_core.messages import AIMessage, HumanMessage, BaseMessage
 from fastapi import HTTPException
+from langchain_postgres import PostgresChatMessageHistory
 
 
 def generate_response_with_gemini(
     user_message: str,
     extracted_text: str,
     conversation_history: List[BaseMessage],
+    chat_history: PostgresChatMessageHistory,
 ) -> str:
 
     try:
+
         response = model.generate_content(
             f"Based on the following PDF content: {extracted_text}\n\n"
             f"Conversation history: {conversation_history}\n"
