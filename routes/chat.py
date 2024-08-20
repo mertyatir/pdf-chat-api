@@ -14,7 +14,6 @@ import chromadb
 from db.get_db import get_db
 from services.pdf_service import get_pdf_file
 from validators.chat_with_pdf import (
-    validate_pdf_id,
     validate_message,
 )
 
@@ -24,11 +23,10 @@ chat_router = APIRouter()
 
 @chat_router.post("/{pdf_id}/", response_model=ChatResponse)
 async def chat_with_pdf(
-    pdf_id: str = Path(...),
+    pdf_id: str = Path(..., description="The ID of the PDF file"),
     message: MessageRequest = Body(...),
     db: Session = Depends(get_db),  # Dependency injection
 ):
-    validate_pdf_id(pdf_id)
 
     logger.info("Chatting with PDF: %s", pdf_id)
     logger.info("Message: %s", message.message)

@@ -9,7 +9,7 @@ def get_pdf_file(pdf_id: str, db: Session) -> PDFFile:
     if not pdf_file:
         raise HTTPException(
             status_code=404,
-            detail="PDF not found.",
+            detail="PDF not found in the database.",
         )
 
     return pdf_file
