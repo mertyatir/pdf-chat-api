@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from langchain_postgres import PostgresChatMessageHistory
 
 
-def generate_response_with_gemini(
+async def generate_response_with_gemini(
     user_message: str,
     extracted_text: str,
     conversation_history: List[BaseMessage],
@@ -20,7 +20,7 @@ def generate_response_with_gemini(
             f"User's question: {user_message}"
         )
 
-        chat_history.add_messages(
+        await chat_history.aadd_messages(
             [
                 HumanMessage(content=user_message),
                 AIMessage(content=response.text),

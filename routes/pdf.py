@@ -1,22 +1,21 @@
-from fastapi import APIRouter, UploadFile, HTTPException, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import Column
+from fastapi import APIRouter, UploadFile, Depends
+import hashlib
+
 from config import logger
+from config.database import get_db
+
 from utils.pdf_utils import validate_pdf
-import uuid
-import pypdf
-from models import PDFFile
-from models.pdf_models import UploadPDFResponse
-from db.get_db import get_db
-import chromadb
-import os
 from utils import extract_text_from_pdf, split_text, preprocess_text
+
+from models.pdf_models import UploadPDFResponse
+
 from services.chromaDB import (
     get_or_create_collection,
     populate_collection,
 )
-from services.pdf_service import get_pdf_file
-import hashlib
+from services.pdf_service import get_pdf_file_from_file_hash, store_pdf_file
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 pdf_router = APIRouter()
@@ -28,65 +27,28 @@ pdf_router = APIRouter()
 )
 async def upload_pdf(
     file: UploadFile,
-    db: Session = Depends(get_db),
+    session: AsyncSession = Depends(get_db),
 ):
 
     await validate_pdf(file)
-
     logger.info("Uploading PDF file: %s", file.filename)
 
-    pdf_id = str(uuid.uuid4())
-
     file_content = await file.read()
-
-    # Compute the hash of the file content
     file_hash = hashlib.sha256(file_content).hexdigest()
+    existing_file = await get_pdf_file_from_file_hash(file_hash, session)
 
-    # Check if the hash already exists in the database
-    existing_file = db.query(PDFFile).filter_by(file_hash=file_hash).first()
     if existing_file:
         return {
             "pdf_id": existing_file.id,
         }
 
-    pdf_reader = pypdf.PdfReader(file.file)
-    page_count = len(pdf_reader.pages)
+    pdf_id = await store_pdf_file(file, file_content, file_hash, session)
 
-    session_id = str(uuid.uuid4())
-
-    # Store the PDF file in the database
-    pdf_file = PDFFile(
-        id=pdf_id,
-        filename=file.filename,
-        content=file_content,
-        page_count=page_count,
-        file_hash=file_hash,
-        session_id=session_id,
-    )
-    db.add(pdf_file)
-    db.commit()
-
-    collection_name = pdf_file.id
-
-    if isinstance(collection_name, Column):
-        collection_name = collection_name.value
-
-    pdf_file = get_pdf_file(pdf_id, db)
-
-    pdf_content = pdf_file.content
-    if not isinstance(pdf_content, bytes):
-        raise HTTPException(
-            status_code=500,
-            detail="PDF content is not in binary format.",
-        )
-
-    extracted_text = extract_text_from_pdf(pdf_content)
+    extracted_text = extract_text_from_pdf(file.file)
     cleaned_text = preprocess_text(extracted_text)
     chunked_text = split_text(cleaned_text)
 
-    persist_directory = os.path.join(os.getcwd(), "persist")
-    client = chromadb.PersistentClient(path=persist_directory)
-    collection = get_or_create_collection(client, collection_name)
+    collection = get_or_create_collection(pdf_id)
 
     populate_collection(collection, chunked_text)
 
