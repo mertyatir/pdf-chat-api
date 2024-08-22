@@ -25,7 +25,7 @@ async def generate_response_with_gemini(
 
         chain = prompt | llm
 
-        response = chain.invoke(
+        response = await chain.ainvoke(
             {
                 "user_message": user_message,
                 "conversation_history": conversation_history,
