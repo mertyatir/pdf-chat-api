@@ -1,10 +1,11 @@
 import uuid
 from langchain_postgres import PostgresChatMessageHistory
 import psycopg
+from config import DATABASE_URL
 
 
 table_name = "chat_history"
-DATABASE_URL = "postgresql://myuser:mypassword@localhost:5432/pdf_chat_db"
+DATABASE_URL = DATABASE_URL.replace("+asyncpg", "")
 
 
 async def bootstrap_db():
