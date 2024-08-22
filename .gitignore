@@ -164,3 +164,6 @@ cython_debug/
 # local chroma databases
 app/persist
 persist
+
+.langchain.db
+chroma_db/

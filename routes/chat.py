@@ -58,4 +58,4 @@ async def chat_with_pdf(
         conversation_history,
         chat_history,
     )
-    return {"response": response}
+    return {"response": response.content}

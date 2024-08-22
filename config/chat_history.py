@@ -4,6 +4,7 @@ import psycopg
 
 
 table_name = "chat_history"
+DATABASE_URL = "postgresql://myuser:mypassword@localhost:5432/pdf_chat_db"
 
 
 async def bootstrap_db():
@@ -12,23 +13,18 @@ async def bootstrap_db():
 
 async def create_chat_history_table():
 
-    async_connection = await psycopg.AsyncConnection.connect(
-        "postgresql://myuser:mypassword@localhost:5432/pdf_chat_db"
-    )
+    async_connection = await psycopg.AsyncConnection.connect(DATABASE_URL)
     # Create the table schema (only needs to be done once)
     await PostgresChatMessageHistory.acreate_tables(
         async_connection, table_name
     )
 
 
-# Function to initialize the chat history manager with a unique session ID
 async def get_or_create_chat_history(session_id=None):
     if session_id is None:
         session_id = str(uuid.uuid4())
 
-    async_connection = await psycopg.AsyncConnection.connect(
-        "postgresql://myuser:mypassword@localhost:5432/pdf_chat_db"
-    )
+    async_connection = await psycopg.AsyncConnection.connect(DATABASE_URL)
 
     # Initialize the chat history manager
     chat_history = PostgresChatMessageHistory(

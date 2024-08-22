@@ -1,8 +1,9 @@
-from config import model, logger
+from config import llm, logger
 from typing import List
 from langchain_core.messages import AIMessage, HumanMessage, BaseMessage
 from fastapi import HTTPException
 from langchain_postgres import PostgresChatMessageHistory
+from langchain.prompts import PromptTemplate
 
 
 async def generate_response_with_gemini(
@@ -10,24 +11,36 @@ async def generate_response_with_gemini(
     extracted_text: str,
     conversation_history: List[BaseMessage],
     chat_history: PostgresChatMessageHistory,
-) -> str:
+) -> BaseMessage:
 
     try:
 
-        response = model.generate_content(
-            f"Based on the following PDF content: {extracted_text}\n\n"
-            f"Conversation history: {conversation_history}\n"
-            f"User's question: {user_message}"
+        template = """
+        Based on the following PDF content: {extracted_text}\n\n
+        Conversation history: {conversation_history}\n
+        User's question: {user_message}
+        """
+
+        prompt = PromptTemplate.from_template(template)
+
+        chain = prompt | llm
+
+        response = chain.invoke(
+            {
+                "user_message": user_message,
+                "conversation_history": conversation_history,
+                "extracted_text": extracted_text,
+            }
         )
 
         await chat_history.aadd_messages(
             [
                 HumanMessage(content=user_message),
-                AIMessage(content=response.text),
+                AIMessage(content=response.content),
             ]
         )
-        logger.info("Response generated: %s", response.text)
-        return response.text
+        logger.info("Response generated: %s", response.content)
+        return response
 
     except Exception as e:
         logger.error("An error occurred while generating response: %s", e)

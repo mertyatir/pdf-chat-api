@@ -5,7 +5,7 @@ import chromadb
 from chromadb import QueryResult
 
 
-persist_directory = os.path.join(os.getcwd(), "persist")
+persist_directory = os.path.join(os.getcwd(), "chroma_db")
 client = chromadb.PersistentClient(path=persist_directory)
 
 
