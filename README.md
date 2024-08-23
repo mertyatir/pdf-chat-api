@@ -78,7 +78,7 @@ curl -X 'POST' \
 
 ```json
 {
-  "pdf_id": "6aa313f3-d961-4fb4-9006-9e2375ee25dc"
+  "pdf_id": "<pdf_id>"
 }
 ```
 
@@ -88,11 +88,11 @@ To query the PDF you just uploaded, use the following `curl` command, replacing 
 
 ```bash
 curl -X 'POST' \
-  'http://127.0.0.1:8000/v1/chat/6aa313f3-d961-4fb4-9006-9e2375ee25dc/' \
+  'http://127.0.0.1:8000/v1/chat/<pdf_id>/' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
-  "message": "Whats this PDF about?"
+  "message": "What's this PDF about?"
 }'
 ```
 
