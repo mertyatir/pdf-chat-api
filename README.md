@@ -8,7 +8,7 @@ The PDF Chat API is a sophisticated backend application built using FastAPI that
 
 - **Retrieval-Augmented Generation (RAG) with Gemini**: This project utilizes the RAG approach combined with Gemini, which supports a 1 Million context size. RAG dynamically retrieves and incorporates relevant information from the PDFs, enhancing the accuracy and relevance of the responses while efficiently managing the context size.
 - **ChromaDB**: The project integrates with ChromaDB, a high-performance vector database that facilitates efficient storage and retrieval of document embeddings, enabling rapid and accurate information retrieval.
-- **LangChain**: LangChain is used to cache of LLM responses and managing prompt templates.
+- **LangChain**: LangChain is used to cache LLM responses and managing prompt templates.
 
 
 ## Installation
