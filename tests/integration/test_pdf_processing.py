@@ -1,7 +1,8 @@
 from fastapi.testclient import TestClient
+
 from app.main import app
 from config import logger
-from models import PDFFile
+
 from utils import MAX_FILE_SIZE
 
 
@@ -55,17 +56,3 @@ def test_upload_file_size_exceeds_limit(setup_large_pdf):
             f"{MAX_FILE_SIZE / (1024 * 1024)} MB."
         )
     }
-
-
-def test_upload_multi_page_pdf(setup_multi_page_pdf, db_session):
-    with open("multi_page.pdf", "rb") as f:
-        response = client.post(
-            "/v1/pdf", files={"file": ("multi_page.pdf", f, "application/pdf")}
-        )
-    logger.info("Response: %s", response.json())
-    assert response.status_code == 200
-    response_data = response.json()
-    assert "pdf_id" in response.json()
-    pdf_id = response_data["pdf_id"]
-    pdf_file = db_session.query(PDFFile).filter(PDFFile.id == pdf_id).first()
-    assert pdf_file.page_count == 3

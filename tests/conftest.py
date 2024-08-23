@@ -4,17 +4,17 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import requests
 import pypdf
-from config import SessionLocal
+
 from models import PDFFile
 from utils import MAX_FILE_SIZE
 import uuid
 
+from config.database import async_session
+
 
 @pytest.fixture
 def db_session():
-    session = SessionLocal()
-    yield session
-    session.close()
+    yield async_session()
 
 
 test_pdf_url = (
@@ -45,13 +45,12 @@ def setup_valid_pdf(db_session):
             content=f.read(),
         )
         db_session.add(pdf_file)
-        db_session.commit()
 
     yield pdf_id
 
     # Teardown
     db_session.delete(pdf_file)
-    db_session.commit()
+
     os.remove(file_path)
 
 

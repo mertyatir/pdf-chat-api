@@ -1,4 +1,4 @@
-from .pdf_utils import (
+from validators.validate_pdf import (
     MAX_FILE_SIZE,
     validate_pdf,
 )

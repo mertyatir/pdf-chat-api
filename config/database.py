@@ -1,13 +1,14 @@
 from .logger import logger
 import os
-from collections.abc import AsyncGenerator
-from typing import Any
+
+from typing import Any, AsyncGenerator
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.pool import NullPool
 
 
 DATABASE_URL = os.getenv(
@@ -16,7 +17,9 @@ DATABASE_URL = os.getenv(
 )
 
 
-async_engine = create_async_engine(DATABASE_URL, echo=False)
+async_engine = create_async_engine(
+    DATABASE_URL, echo=False, poolclass=NullPool
+)
 async_session = async_sessionmaker(async_engine, expire_on_commit=False)
 Base = declarative_base()
 

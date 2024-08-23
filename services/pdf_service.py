@@ -28,8 +28,8 @@ async def get_pdf_file_from_file_hash(
 ) -> PDFFile:
 
     q = select(PDFFile).filter(PDFFile.file_hash == file_hash)
-    existing_file = await session.execute(q)
-    existing_file = existing_file.scalars().first()
+    result = await session.execute(q)
+    existing_file = result.scalars().first()
 
     return existing_file
 

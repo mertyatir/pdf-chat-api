@@ -4,7 +4,7 @@ import hashlib
 from config import logger
 from config.database import get_db
 
-from utils.pdf_utils import validate_pdf
+from validators.validate_pdf import validate_pdf
 from utils import extract_text_from_pdf, split_text, preprocess_text
 
 from models.pdf_models import UploadPDFResponse
