@@ -134,7 +134,7 @@ RAG is generally a better approach for handling large datasets and specific info
 ### Problem 2: Having 1 Million context size is great, but output tokens are limited to 8196. How would you handle queries that have more than 8196 tokens?
 
 **Solution**:
-- **Chunking**: Split the input into smaller chunks that fit within the token limit and process each chunk separately.
+- **Chunking**: Split the output into smaller chunks that fit within the token limit and process each chunk separately.
 
 ### Problem 3: Writing unit tests is great for ensuring the app works just fine, but how would you evaluate the performance of the Large Language Model?
 
