@@ -1,8 +1,12 @@
 import os
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.globals import set_llm_cache
 from langchain_community.cache import SQLiteCache
+from dotenv import load_dotenv, find_dotenv
 
+
+load_dotenv(find_dotenv())
 
 google_api_key = os.getenv("GEMINI_API_KEY")
 

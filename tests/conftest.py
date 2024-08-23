@@ -11,6 +11,8 @@ import uuid
 
 from config.database import async_session
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.fixture
 def db_session():
@@ -24,7 +26,7 @@ test_pdf_url = (
 
 
 @pytest.fixture
-def setup_valid_pdf(db_session):
+async def setup_valid_pdf(db_session: AsyncSession):
     url = test_pdf_url
     file_path = "test.pdf"
 
@@ -49,7 +51,7 @@ def setup_valid_pdf(db_session):
     yield pdf_id
 
     # Teardown
-    db_session.delete(pdf_file)
+    await db_session.delete(pdf_file)
 
     os.remove(file_path)
 
