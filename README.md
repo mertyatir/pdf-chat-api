@@ -58,6 +58,62 @@ To set up and run the PDF Chat API locally, follow these steps:
 7. **Access the API documentation**:
    - Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) in your browser to view the API endpoint documentation.
 
+## API Usage
+
+
+
+### Upload a PDF
+
+To upload a PDF, use the following `curl` command:
+
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/v1/pdf/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'file=@eg14_cats_and_people.pdf;type=application/pdf'
+```
+
+**Response**:
+
+```json
+{
+  "pdf_id": "6aa313f3-d961-4fb4-9006-9e2375ee25dc"
+}
+```
+
+### Query the PDF
+
+To query the PDF you just uploaded, use the following `curl` command, replacing `<pdf_id>` with the actual PDF ID from the upload response:
+
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/v1/chat/6aa313f3-d961-4fb4-9006-9e2375ee25dc/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "message": "Whats this PDF about?"
+}'
+```
+
+**Response**:
+
+```json
+{
+  "response": "This PDF is about how to care for a cat. It includes information on the following topics:\n\n* The basics of cat care, such as feeding, grooming, and housing\n* Common health problems in cats\n* How to socialize a cat\n* How to deal with feral cats\n* How to find a cat to adopt\n* How to get involved with Cats Protection, a UK-based cat welfare organization"
+}
+```
+
+
+### Source PDF
+
+The PDF used in this example can be found at: [EG14 Cats and People](https://www.cats.org.uk/media/1025/eg14_cats_and_people.pdf)
+
+
+
+
+
+
 ## Environment Variables
 
 Create a `.env` file in the root directory of your project with the following content:
@@ -86,4 +142,10 @@ RAG is generally a better approach for handling large datasets and specific info
 - **Benchmarking**: Use standard benchmarks like GLUE, SQuAD, etc.
 - **Human Evaluation**: Conduct human evaluations to assess the quality of the model's outputs.
 - **AI Evaluating AI**: Train another model on human evaluations to predict the quality of the generated text. This can provide an automated way to evaluate the model's performance.
+
+
+
+
+
+
 
